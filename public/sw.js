@@ -2,7 +2,7 @@
 // 기록은 개인적인 내용이라 페이지나 API 응답을 기기에 저장(캐시)하지 않는다.
 // 오프라인일 때 보여줄 안내 화면 하나만 미리 저장해 둔다.
 
-const CACHE = "reactor-offline-v1";
+const CACHE = "reactor-offline-v2";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

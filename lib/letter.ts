@@ -3,6 +3,7 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordUsage } from "@/lib/ai-usage";
+import { FOLLOW_WRITING_LANGUAGE } from "@/lib/ai-language";
 import { getMemory, memoryBlock } from "@/lib/memory";
 
 const client = new Anthropic();
@@ -95,7 +96,8 @@ export async function maybeGenerateLetter(
     .limit(1)
     .maybeSingle();
 
-  const systemPrompt = fs.readFileSync(path.join(process.cwd(), "letter.md"), "utf-8");
+  const systemPrompt =
+    fs.readFileSync(path.join(process.cwd(), "letter.md"), "utf-8") + FOLLOW_WRITING_LANGUAGE;
 
   const memory = await getMemory(supabase, userId);
 

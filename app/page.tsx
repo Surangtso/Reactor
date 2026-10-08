@@ -6,17 +6,23 @@ import { logRevisitIfNeeded } from "@/lib/events";
 import { getTimeZone, todayIn } from "@/lib/day";
 import { hasUnreadInsight } from "@/lib/insight";
 import DailyPrompt from "./daily-prompt";
+import Landing from "./landing";
+import { getMessages } from "@/lib/i18n";
+import { categoryLabel } from "@/lib/categories";
+import { LanguageSwitcher } from "./locale-provider";
 import RecordComposer from "./record-composer";
 import ReflectionThread from "./reflection-thread";
 
 export default async function Home() {
   const supabase = await createClient();
+  const { locale, m } = await getMessages();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // 로그인하지 않은 방문자에게는 서비스 소개를 보여준다.
   if (!user) {
-    redirect("/login");
+    return <Landing />;
   }
 
   const { data: activeChapter, error: chapterError } = await supabase
@@ -28,7 +34,7 @@ export default async function Home() {
     .maybeSingle();
 
   if (chapterError) {
-    return <ErrorState />;
+    return <ErrorState title={m.common.loadError} body={m.common.retryLater} />;
   }
 
   if (!activeChapter) {
@@ -81,10 +87,10 @@ export default async function Home() {
             href="/for-you"
             className="relative text-sm leading-none text-zinc-500 hover:text-black dark:hover:text-zinc-50"
           >
-            너에게
+            {m.nav.forYou}
             {unreadInsight && (
               <span
-                aria-label="새로 도착"
+                aria-label={m.nav.newArrival}
                 className="absolute -right-1.5 -top-1 h-1.5 w-1.5 rounded-full bg-maroon"
               />
             )}
@@ -99,14 +105,14 @@ export default async function Home() {
             href="/archive"
             className="text-[15px] leading-none text-zinc-500 hover:text-black dark:hover:text-zinc-50"
           >
-            archive
+            {m.nav.archive}
           </Link>
           <form action="/api/auth/signout" method="post" className="flex items-center">
             <button
               type="submit"
               className="text-xs leading-none text-zinc-400 hover:text-black dark:hover:text-zinc-50"
             >
-              로그아웃
+              {m.nav.logout}
             </button>
           </form>
         </div>
@@ -121,7 +127,7 @@ export default async function Home() {
 
         {entriesError && (
           <p className="mt-10 text-xs text-zinc-400">
-            오늘 남긴 기록을 불러오지 못했어요. 새로고침하면 다시 보일 거예요.
+            {m.home.todayLoadError}
           </p>
         )}
 
@@ -129,7 +135,7 @@ export default async function Home() {
           <div className="mt-16 flex flex-col gap-8">
             {todayEntries.map((entry) => (
               <div key={entry.id}>
-                <span className="text-xs text-zinc-400">{entry.category}</span>
+                <span className="text-xs text-zinc-400">{categoryLabel(entry.category, locale)}</span>
                 <p className="mt-1 text-base whitespace-pre-wrap text-black dark:text-zinc-50">
                   {entry.content}
                 </p>
@@ -146,18 +152,19 @@ export default async function Home() {
             ))}
           </div>
         )}
+        <LanguageSwitcher className="mt-24 justify-center" />
       </main>
     </div>
   );
 }
 
-function ErrorState() {
+function ErrorState({ title, body }: { title: string; body: string }) {
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-black px-4">
       <p className="text-sm text-zinc-500 text-center">
-        지금 불러오는 데 문제가 생겼어요.
+        {title}
         <br />
-        잠시 후 새로고침해주세요.
+        {body}
       </p>
     </div>
   );

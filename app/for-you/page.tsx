@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
-  INSIGHT_KIND_LABELS,
   MIN_ENTRIES_FIRST,
   isInsightDue,
   listInsights,
@@ -10,6 +9,7 @@ import {
   type Insight,
 } from "@/lib/insight";
 import InsightRefresher from "./refresher";
+import { getMessages, type Messages } from "@/lib/i18n";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -18,6 +18,7 @@ function formatDate(iso: string) {
 
 export default async function ForYouPage() {
   const supabase = await createClient();
+  const { m } = await getMessages();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -43,13 +44,13 @@ export default async function ForYouPage() {
       <main className="max-w-2xl mx-auto py-10 px-4">
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-xl font-semibold text-black dark:text-zinc-50">
-            너에게
+            {m.forYou.title}
           </h1>
           <Link
             href="/"
             className="text-xs text-zinc-500 hover:text-black dark:hover:text-zinc-50"
           >
-            홈으로
+            {m.common.home}
           </Link>
         </div>
 
@@ -61,8 +62,7 @@ export default async function ForYouPage() {
 
         {!latest && !due && (
           <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-            기록이 조금 더 쌓이면, 네 기록들을 읽고 건네는 이야기가 여기에
-            도착해.
+            {m.forYou.empty}
             <br />
             <span className="text-xs text-zinc-400">
               ({Math.min(entryCount, MIN_ENTRIES_FIRST)} / {MIN_ENTRIES_FIRST})
@@ -70,18 +70,18 @@ export default async function ForYouPage() {
           </p>
         )}
 
-        {latest && <InsightArticle insight={latest} />}
+        {latest && <InsightArticle insight={latest} m={m} />}
 
         {past.length > 0 && (
           <section className="mt-20">
-            <h2 className="text-xs text-zinc-400 mb-6">지난 이야기들</h2>
+            <h2 className="text-xs text-zinc-400 mb-6">{m.forYou.past}</h2>
             <div className="flex flex-col gap-4">
               {past.map((insight) => (
                 <details key={insight.id} className="group">
                   <summary className="cursor-pointer list-none text-sm text-zinc-600 dark:text-zinc-300 hover:text-black dark:hover:text-zinc-50">
                     <span className="text-xs text-zinc-400 mr-2">
                       {formatDate(insight.created_at)} ·{" "}
-                      {INSIGHT_KIND_LABELS[insight.kind]}
+                      {m.forYou.kinds[insight.kind]}
                     </span>
                     {insight.title}
                   </summary>
@@ -98,11 +98,11 @@ export default async function ForYouPage() {
   );
 }
 
-function InsightArticle({ insight }: { insight: Insight }) {
+function InsightArticle({ insight, m }: { insight: Insight; m: Messages }) {
   return (
     <article>
       <p className="text-xs text-zinc-400 mb-3">
-        {INSIGHT_KIND_LABELS[insight.kind]} · {formatDate(insight.created_at)}
+        {m.forYou.kinds[insight.kind]} · {formatDate(insight.created_at)}
       </p>
       <h2 className="text-lg font-semibold text-black dark:text-zinc-50 mb-8">
         {insight.title}

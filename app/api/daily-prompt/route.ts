@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getOrCreateDailyPrompt } from "@/lib/daily-prompt";
 import { getToday } from "@/lib/day";
+import { getLocale } from "@/lib/i18n";
 
 export async function GET() {
   const supabase = await createClient();
@@ -25,6 +26,7 @@ export async function GET() {
     user.id,
     activeChapter?.name ?? null,
     await getToday(),
+    await getLocale(),
   );
 
   return Response.json({ content });

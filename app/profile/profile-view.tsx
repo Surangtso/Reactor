@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ProfileItem } from "@/lib/soft-profile";
+import { useI18n } from "../locale-provider";
 
 export default function ProfileView({
   headline,
@@ -12,6 +13,7 @@ export default function ProfileView({
   items: ProfileItem[];
   initialHidden: string[];
 }) {
+  const { m } = useI18n();
   const [hidden, setHidden] = useState<string[]>(initialHidden);
   // 숨김이 바뀔 때마다 미리보기 이미지를 새로 받아오기 위한 값
   const [version, setVersion] = useState(0);
@@ -32,7 +34,7 @@ export default function ProfileView({
       setHidden((h) =>
         nextHidden ? h.filter((l) => l !== label) : [...h, label],
       );
-      setError("저장하지 못했어. 다시 눌러줘.");
+      setError(m.profile.hideFailed);
       return;
     }
     setError(null);
@@ -60,7 +62,7 @@ export default function ProfileView({
         URL.revokeObjectURL(url);
       }
     } catch {
-      setError("이미지를 만들지 못했어. 다시 눌러줘.");
+      setError(m.profile.imageFailed);
     } finally {
       setSaving(false);
     }
@@ -91,7 +93,7 @@ export default function ProfileView({
                   onClick={() => toggle(item.label)}
                   className="shrink-0 mt-1 text-xs text-zinc-400 hover:text-black dark:hover:text-zinc-50"
                 >
-                  {isHidden ? "이미지에 넣기" : "이미지에서 빼기"}
+                  {isHidden ? m.profile.show : m.profile.hide}
                 </button>
               </li>
             );
@@ -103,7 +105,7 @@ export default function ProfileView({
         {/* eslint-disable-next-line @next/next/no-img-element -- 로그인한 본인만 받는 동적 이미지라 next/image 최적화를 쓰지 않는다 */}
         <img
           src={`/api/soft-profile/image?v=${version}`}
-          alt="soft-profile 이미지 미리보기"
+          alt={m.profile.previewAlt}
           className="w-full max-w-xs rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800"
         />
         <button
@@ -112,7 +114,7 @@ export default function ProfileView({
           disabled={saving}
           className="rounded-full bg-maroon text-white px-5 py-2 text-sm font-medium disabled:opacity-40"
         >
-          {saving ? "만드는 중..." : "이미지 저장"}
+          {saving ? m.profile.making : m.profile.saveImage}
         </button>
         {error && <p className="text-xs text-red-500">{error}</p>}
       </section>

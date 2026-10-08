@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import type { ProfileItem } from "@/lib/soft-profile";
+import type { Locale } from "@/lib/messages";
 
 // 인스타그램 스토리 비율 (9:16)
 export const CARD_WIDTH = 1080;
@@ -65,26 +66,37 @@ function Column({
   );
 }
 
+// 이름 뒤에 붙는 말: "하늘의" / "Haneul's" / "天空的"
+const OWNER: Record<Locale, (name: string) => string> = {
+  ko: (name) => `${name}의`,
+  en: (name) => `${name}'s`,
+  zh: (name) => `${name}的`,
+};
+
 export async function renderProfileCard({
   name,
   headline,
   items,
+  locale = "ko",
 }: {
   name: string | null;
   headline: string;
   items: ProfileItem[];
+  locale?: Locale;
 }) {
   const footer = "tsotlo.com";
-  const koreanText =
-    (name ? `${name}의` : "") +
-    headline +
-    footer +
-    items.map((i) => i.label + i.value).join("");
+  const owner = name ? OWNER[locale](name) : "";
+  const text = owner + headline + footer + items.map((i) => i.label + i.value).join("");
 
-  const [regular, bold, brandItalic] = await Promise.all([
-    loadFont("Noto+Sans+KR:wght@400", koreanText),
-    loadFont("Noto+Sans+KR:wght@700", koreanText),
+  // 한글 글꼴에는 간체 한자가 대부분 없어서, 한자가 있으면 중국어 글꼴을 함께 싣는다
+  // (Satori는 글자가 없는 글꼴을 건너뛰고 다음 글꼴로 그린다).
+  const hasHan = /[\u3400-\u9fff]/.test(text);
+  const [regular, bold, brandItalic, scRegular, scBold] = await Promise.all([
+    loadFont("Noto+Sans+KR:wght@400", text),
+    loadFont("Noto+Sans+KR:wght@700", text),
     loadFont("Noto+Sans:ital,wght@1,400", BRAND),
+    hasHan ? loadFont("Noto+Sans+SC:wght@400", text) : null,
+    hasHan ? loadFont("Noto+Sans+SC:wght@700", text) : null,
   ]);
 
   const [left, right] = splitColumns(items);
@@ -112,7 +124,7 @@ export async function renderProfileCard({
         }}
       >
         <div style={{ display: "flex", fontSize: 30, color: MUTED }}>
-          {name && <span>{name}의&nbsp;</span>}
+          {owner && <span>{owner}&nbsp;</span>}
           <span style={{ fontFamily: "Noto Sans", fontStyle: "italic" }}>
             {BRAND}
           </span>
@@ -166,6 +178,12 @@ export async function renderProfileCard({
         { name: "Noto Sans KR", data: regular, weight: 400, style: "normal" },
         { name: "Noto Sans KR", data: bold, weight: 700, style: "normal" },
         { name: "Noto Sans", data: brandItalic, weight: 400, style: "italic" },
+        ...(scRegular && scBold
+          ? [
+              { name: "Noto Sans SC", data: scRegular, weight: 400 as const, style: "normal" as const },
+              { name: "Noto Sans SC", data: scBold, weight: 700 as const, style: "normal" as const },
+            ]
+          : []),
       ],
       headers: { "Cache-Control": "private, no-store" },
     },

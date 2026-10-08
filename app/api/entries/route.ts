@@ -9,6 +9,7 @@ import { maybeUpdateMemory } from "@/lib/memory";
 import { logEvent } from "@/lib/events";
 import { CATEGORIES, LONG_FORM_CATEGORY } from "@/lib/categories";
 import { getToday } from "@/lib/day";
+import { getLocale } from "@/lib/i18n";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
   }
 
   const today = await getToday();
+  const locale = await getLocale();
 
   const { data: activeChapter } = await supabase
     .from("chapters")
@@ -76,8 +78,8 @@ export async function POST(request: Request) {
     if (category === LONG_FORM_CATEGORY) {
       await maybeUpdateThoughtSummary(supabase, user.id);
     }
-    await maybeGenerateInsight(supabase, user.id);
-    await maybeUpdateProfile(supabase, user.id);
+    await maybeGenerateInsight(supabase, user.id, locale);
+    await maybeUpdateProfile(supabase, user.id, locale);
     await maybeUpdateMemory(supabase, user.id);
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useI18n } from "./locale-provider";
 
 type Reflection = {
   id: string;
@@ -15,6 +16,7 @@ export default function ReflectionThread({
   entryId: string;
   initial: Reflection[];
 }) {
+  const { m } = useI18n();
   const [reflections, setReflections] = useState(initial);
   const [content, setContent] = useState("");
   const [open, setOpen] = useState(false);
@@ -43,8 +45,7 @@ export default function ReflectionThread({
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        setError(data?.error ?? "저장에 실패했어요. 다시 시도해주세요.");
+        setError(m.common.saveFailed);
         return;
       }
 
@@ -53,7 +54,7 @@ export default function ReflectionThread({
       setContent("");
       setOpen(false);
     } catch {
-      setError("연결에 문제가 있는 것 같아요.");
+      setError(m.common.connectionError);
     } finally {
       setSaving(false);
     }
@@ -87,7 +88,7 @@ export default function ReflectionThread({
               setContent(e.target.value);
               autoResize();
             }}
-            placeholder="더 하고 싶은 말"
+            placeholder={m.reflection.placeholder}
             rows={1}
             className="w-full resize-none overflow-hidden bg-transparent text-sm leading-relaxed text-black dark:text-zinc-50 placeholder:text-zinc-400 outline-none border-b border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 pb-2"
           />
@@ -98,7 +99,7 @@ export default function ReflectionThread({
               disabled={!content.trim() || saving}
               className="text-xs rounded-full bg-maroon text-white px-3 py-1 disabled:opacity-30"
             >
-              {saving ? "남기는 중..." : "남기기"}
+              {saving ? m.common.saving : m.common.save}
             </button>
             <button
               type="button"
@@ -109,7 +110,7 @@ export default function ReflectionThread({
               }}
               className="text-xs text-zinc-400 hover:text-black dark:hover:text-zinc-50"
             >
-              취소
+              {m.common.cancel}
             </button>
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
@@ -120,7 +121,7 @@ export default function ReflectionThread({
           onClick={() => setOpen(true)}
           className="mt-2 text-xs text-zinc-400 hover:text-black dark:hover:text-zinc-50"
         >
-          + 덧붙이기
+          {m.reflection.add}
         </button>
       )}
     </div>

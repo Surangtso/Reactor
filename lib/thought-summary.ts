@@ -3,6 +3,7 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordUsage } from "@/lib/ai-usage";
+import { FOLLOW_WRITING_LANGUAGE } from "@/lib/ai-language";
 import { LONG_FORM_CATEGORY } from "@/lib/categories";
 
 const client = new Anthropic();
@@ -111,10 +112,11 @@ export async function maybeUpdateThoughtSummary(
     .filter(Boolean)
     .join("\n\n---\n\n");
 
-  const systemPrompt = fs.readFileSync(
+  const systemPrompt =
+    fs.readFileSync(
     path.join(process.cwd(), "thought-summary.md"),
     "utf-8",
-  );
+  ) + FOLLOW_WRITING_LANGUAGE;
 
   try {
     const response = await client.messages.create({

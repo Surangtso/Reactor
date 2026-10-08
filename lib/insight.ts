@@ -3,6 +3,8 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordUsage } from "@/lib/ai-usage";
+import { screenLanguageRule } from "@/lib/ai-language";
+import type { Locale } from "@/lib/messages";
 import { getMemory, memoryBlock } from "@/lib/memory";
 
 const client = new Anthropic();
@@ -18,13 +20,6 @@ const MAX_ENTRIES_READ = 200;
 
 export const INSIGHT_KINDS = ["book", "person", "potential", "fit"] as const;
 export type InsightKind = (typeof INSIGHT_KINDS)[number];
-
-export const INSIGHT_KIND_LABELS: Record<InsightKind, string> = {
-  book: "책",
-  person: "닮은 사람",
-  potential: "너의 가능성",
-  fit: "어울리는 것",
-};
 
 export type Insight = {
   id: string;
@@ -131,6 +126,7 @@ const DELIVER_TOOL: Anthropic.Tool = {
 export async function maybeGenerateInsight(
   supabase: SupabaseClient,
   userId: string,
+  locale: Locale = "ko",
 ): Promise<void> {
   const { due, entryCount } = await isInsightDue(supabase, userId);
   if (!due) return;
@@ -195,10 +191,11 @@ export async function maybeGenerateInsight(
     .filter(Boolean)
     .join("\n\n---\n\n");
 
-  const systemPrompt = fs.readFileSync(
+  const systemPrompt =
+    fs.readFileSync(
     path.join(process.cwd(), "insight.md"),
     "utf-8",
-  );
+  ) + screenLanguageRule(locale);
 
   const trackWrite = (r: Anthropic.Message) =>
     recordUsage(supabase, userId, "insight_write", r);

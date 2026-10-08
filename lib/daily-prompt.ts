@@ -3,6 +3,8 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordUsage } from "@/lib/ai-usage";
+import { screenLanguageRule } from "@/lib/ai-language";
+import type { Locale } from "@/lib/messages";
 import { getMemory, memoryBlock } from "@/lib/memory";
 
 const client = new Anthropic();
@@ -21,11 +23,13 @@ async function generate(
   userId: string,
   chapterName: string | null,
   today: string,
+  locale: Locale,
 ): Promise<string | null> {
-  const systemPrompt = fs.readFileSync(
+  const systemPrompt =
+    fs.readFileSync(
     path.join(process.cwd(), "daily-prompt.md"),
     "utf-8",
-  );
+  ) + screenLanguageRule(locale);
 
   const [{ data: entries }, { data: recentPrompts }, memory] = await Promise.all([
     supabase
@@ -94,6 +98,7 @@ export async function getOrCreateDailyPrompt(
   userId: string,
   chapterName: string | null,
   today: string,
+  locale: Locale = "ko",
 ): Promise<string | null> {
   const { data: existing } = await supabase
     .from("daily_prompts")
@@ -104,7 +109,7 @@ export async function getOrCreateDailyPrompt(
 
   if (existing) return existing.content;
 
-  const content = await generate(supabase, userId, chapterName, today);
+  const content = await generate(supabase, userId, chapterName, today, locale);
   if (!content) return null;
 
   const { error } = await supabase

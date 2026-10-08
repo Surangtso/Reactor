@@ -3,6 +3,8 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordUsage } from "@/lib/ai-usage";
+import { screenLanguageRule } from "@/lib/ai-language";
+import type { Locale } from "@/lib/messages";
 
 const client = new Anthropic();
 const MODEL = "claude-opus-5";
@@ -101,6 +103,7 @@ const PROFILE_TOOL: Anthropic.Tool = {
 export async function maybeUpdateProfile(
   supabase: SupabaseClient,
   userId: string,
+  locale: Locale = "ko",
 ): Promise<void> {
   const { due, entryCount, latest } = await isProfileDue(supabase, userId);
   if (!due) return;
@@ -129,10 +132,11 @@ export async function maybeUpdateProfile(
       : "이전 프로필: (없음, 이번이 처음)",
   ].join("\n\n---\n\n");
 
-  const systemPrompt = fs.readFileSync(
+  const systemPrompt =
+    fs.readFileSync(
     path.join(process.cwd(), "soft-profile.md"),
     "utf-8",
-  );
+  ) + screenLanguageRule(locale);
 
   try {
     const response = await client.messages.create({

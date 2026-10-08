@@ -3,6 +3,7 @@ import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { recordUsage } from "@/lib/ai-usage";
+import { FOLLOW_WRITING_LANGUAGE } from "@/lib/ai-language";
 import { getMemory, memoryBlock } from "@/lib/memory";
 
 const client = new Anthropic();
@@ -107,10 +108,11 @@ export async function generateComment(
   chapterName: string | null,
   entry: EntryForComment,
 ): Promise<string | null> {
-  const systemPrompt = fs.readFileSync(
+  const systemPrompt =
+    fs.readFileSync(
     path.join(process.cwd(), "comment.md"),
     "utf-8",
-  );
+  ) + FOLLOW_WRITING_LANGUAGE;
 
   const [chronological, memory] = await Promise.all([
     fetchHistory(supabase, userId, entry.id),
@@ -144,10 +146,11 @@ export async function generateReflectionComment(
   entry: EntryForComment & { comment: string | null },
   reflectionContent: string,
 ): Promise<string | null> {
-  const systemPrompt = fs.readFileSync(
+  const systemPrompt =
+    fs.readFileSync(
     path.join(process.cwd(), "comment.md"),
     "utf-8",
-  );
+  ) + FOLLOW_WRITING_LANGUAGE;
 
   const [chronological, memory] = await Promise.all([
     fetchHistory(supabase, userId, entry.id),

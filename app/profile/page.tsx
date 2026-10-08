@@ -9,9 +9,11 @@ import {
 } from "@/lib/soft-profile";
 import ProfileRefresher from "./refresher";
 import ProfileView from "./profile-view";
+import { getMessages } from "@/lib/i18n";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
+  const { m } = await getMessages();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -31,12 +33,12 @@ export default async function ProfilePage() {
     ? {
         done: Math.min(entryCount - latest.entry_count, PROFILE_UPDATE_EVERY),
         goal: PROFILE_UPDATE_EVERY,
-        label: "다음 업데이트까지",
+        label: m.profile.nextUpdate,
       }
     : {
         done: Math.min(entryCount, MIN_ENTRIES_FOR_PROFILE),
         goal: MIN_ENTRIES_FOR_PROFILE,
-        label: "프로필이 만들어지기까지",
+        label: m.profile.untilFirst,
       };
 
   return (
@@ -57,7 +59,7 @@ export default async function ProfilePage() {
             href="/"
             className="text-xs text-zinc-500 hover:text-black dark:hover:text-zinc-50"
           >
-            홈으로
+            {m.common.home}
           </Link>
         </div>
 
@@ -69,8 +71,7 @@ export default async function ProfilePage() {
 
         {!latest && !due && (
           <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-            기록이 {MIN_ENTRIES_FOR_PROFILE}개 쌓이면, 네 기록으로 너를 설명하는
-            프로필이 생겨. 그다음부터는 기록이 쌓일수록 점점 채워져.
+            {m.profile.empty(MIN_ENTRIES_FOR_PROFILE)}
           </p>
         )}
 

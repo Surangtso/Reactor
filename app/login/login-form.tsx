@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import PrivacyHint from "../privacy-hint";
+import { LanguageSwitcher, useI18n } from "../locale-provider";
 
 export default function LoginForm({ hasAuthError }: { hasAuthError: boolean }) {
+  const { locale, m } = useI18n();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
@@ -27,6 +29,9 @@ export default function LoginForm({ hasAuthError }: { hasAuthError: boolean }) {
       email: submittedEmail,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // 처음 가입할 때 화면 언어를 사용자 정보에 남겨, 로그인 메일을 그 언어로 보낸다
+        // (Supabase 메일 템플릿이 .Data.locale을 보고 문구를 고른다).
+        data: { locale },
       },
     });
     setStatus(error ? "error" : "sent");
@@ -37,25 +42,25 @@ export default function LoginForm({ hasAuthError }: { hasAuthError: boolean }) {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 mb-2">
           <h1 className="text-xl font-semibold text-black dark:text-zinc-50">
-            로그인
+            {m.login.title}
           </h1>
           <PrivacyHint />
         </div>
         <p className="text-sm text-zinc-500 mb-6">
-          이메일로 로그인 링크를 보내드릴게요. 비밀번호는 필요 없어요.
+          {m.login.intro}
         </p>
 
         {hasAuthError && status === "idle" && (
           <p className="text-sm text-red-500 mb-6">
-            로그인 링크가 만료되었거나 이미 사용된 것 같아요. 아래에서 새
-            링크를 받아주세요.
+            {m.login.authError}
           </p>
         )}
 
         {status === "sent" ? (
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
-            <strong>{email}</strong> 주소로 로그인 링크를 보냈어요. 메일함을
-            확인해주세요.
+            {m.login.sentBefore}
+            <strong>{email}</strong>
+            {m.login.sentAfter}
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -75,27 +80,28 @@ export default function LoginForm({ hasAuthError }: { hasAuthError: boolean }) {
               disabled={status === "sending"}
               className="rounded-full bg-maroon text-white px-5 py-2 text-sm font-medium disabled:opacity-40"
             >
-              {status === "sending" ? "보내는 중..." : "로그인 링크 받기"}
+              {status === "sending" ? m.login.sending : m.login.send}
             </button>
             {status === "error" && (
               <p className="text-sm text-red-500">
-                링크 전송에 실패했어요. 다시 시도해주세요.
+                {m.login.sendFailed}
               </p>
             )}
           </form>
         )}
 
         <p className="mt-8 text-xs text-zinc-400">
-          로그인하면{" "}
+          {m.login.consentBefore}
           <Link href="/terms" className="underline hover:text-zinc-600 dark:hover:text-zinc-300">
-            이용약관
-          </Link>{" "}
-          및{" "}
-          <Link href="/privacy" className="underline hover:text-zinc-600 dark:hover:text-zinc-300">
-            개인정보처리방침
+            {m.login.terms}
           </Link>
-          에 동의하는 것으로 간주됩니다. (만 14세 이상)
+          {m.login.and}
+          <Link href="/privacy" className="underline hover:text-zinc-600 dark:hover:text-zinc-300">
+            {m.login.privacy}
+          </Link>
+          {m.login.consentAfter}
         </p>
+        <LanguageSwitcher className="mt-6" />
       </div>
     </div>
   );

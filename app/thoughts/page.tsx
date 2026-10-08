@@ -7,9 +7,11 @@ import {
   getLatestThoughtSummary,
 } from "@/lib/thought-summary";
 import ThoughtSummaryRefresher from "./refresher";
+import { getMessages } from "@/lib/i18n";
 
 export default async function ThoughtsPage() {
   const supabase = await createClient();
+  const { m } = await getMessages();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -31,22 +33,21 @@ export default async function ThoughtsPage() {
       <main className="max-w-2xl mx-auto py-10 px-4">
         <div className="flex items-center justify-between mb-10">
           <h1 className="text-xl font-semibold text-black dark:text-zinc-50">
-            나의 생각들
+            {m.thoughts.title}
           </h1>
           <Link
             href="/"
             className="text-xs text-zinc-500 hover:text-black dark:hover:text-zinc-50"
           >
-            홈으로
+            {m.common.home}
           </Link>
         </div>
 
         {!enough && (
           <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-            &apos;생각&apos;에 긴 글이 두 편 쌓이면, 네 글들을 읽고 쓴 글이 여기에
-            놓여.
+            {m.thoughts.empty1}
             <br />
-            그다음부터는 한 편씩 쌓일 때마다 새로 써져.
+            {m.thoughts.empty2}
           </p>
         )}
 
@@ -59,7 +60,7 @@ export default async function ThoughtsPage() {
         {enough && latest && (
           <article>
             <p className="text-xs text-zinc-400 mb-6">
-              긴 글 {latest.entry_count}편을 읽고
+              {m.thoughts.readCount(latest.entry_count)}
             </p>
             <div className="text-base leading-loose whitespace-pre-wrap text-black dark:text-zinc-50">
               {latest.content}

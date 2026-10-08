@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, categoryLabel } from "@/lib/categories";
+import { getMessages, type Locale, type Messages } from "@/lib/i18n";
 import ReflectionThread from "../reflection-thread";
 
 type Chapter = {
@@ -42,6 +43,7 @@ export default async function ArchivePage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const supabase = await createClient();
+  const { locale, m } = await getMessages();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -93,9 +95,9 @@ export default async function ArchivePage({
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center px-4">
         <p className="text-sm text-zinc-500 text-center">
-          지금 불러오는 데 문제가 생겼어요.
+          {m.common.loadError}
           <br />
-          잠시 후 새로고침해주세요.
+          {m.common.retryLater}
         </p>
       </div>
     );
@@ -139,17 +141,17 @@ export default async function ArchivePage({
             href="/"
             className="text-xs text-zinc-500 hover:text-black dark:hover:text-zinc-50"
           >
-            홈으로
+            {m.common.home}
           </Link>
         </div>
 
-        <CategoryFilter selected={category} />
+        <CategoryFilter selected={category} locale={locale} m={m} />
 
         {(!chapters || chapters.length === 0) && orphanEntries.length === 0 && (
           <p className="text-zinc-400 text-sm">
             {category
-              ? "이 카테고리에는 아직 기록이 없어요."
-              : "아직 쌓인 기록이 없어요. 채팅에서 대화를 시작해보세요."}
+              ? m.archive.emptyCategory
+              : m.archive.empty}
           </p>
         )}
 
@@ -161,8 +163,10 @@ export default async function ArchivePage({
               entries={entriesByChapter.get(chapter.id) ?? []}
               reflectionsByEntry={reflectionsByEntry}
               narratives={narrativesForChapter(chapter)}
+              locale={locale}
+              m={m}
               emptyMessage={
-                category ? "이 카테고리 기록 없음" : "아직 기록이 없어요."
+                category ? m.archive.chapterEmptyCategory : m.archive.chapterEmpty
               }
             />
           ))}
@@ -170,11 +174,12 @@ export default async function ArchivePage({
           {orphanEntries.length > 0 && (
             <section>
               <h2 className="text-sm font-medium text-zinc-400 mb-4">
-                챕터 없음
+                {m.archive.noChapter}
               </h2>
               <Timeline
                 entries={orphanEntries}
                 reflectionsByEntry={reflectionsByEntry}
+                locale={locale}
               />
             </section>
           )}
@@ -184,10 +189,18 @@ export default async function ArchivePage({
   );
 }
 
-function CategoryFilter({ selected }: { selected?: string }) {
+function CategoryFilter({
+  selected,
+  locale,
+  m,
+}: {
+  selected?: string;
+  locale: Locale;
+  m: Messages;
+}) {
   const tabs: { label: string; value?: string }[] = [
-    { label: "전체", value: undefined },
-    ...CATEGORIES.map((c) => ({ label: c, value: c })),
+    { label: m.archive.all, value: undefined },
+    ...CATEGORIES.map((c) => ({ label: categoryLabel(c, locale), value: c })),
   ];
 
   return (
@@ -219,12 +232,16 @@ function ChapterSection({
   reflectionsByEntry,
   narratives,
   emptyMessage,
+  locale,
+  m,
 }: {
   chapter: Chapter;
   entries: Entry[];
   reflectionsByEntry: Map<string, Reflection[]>;
   narratives: Narrative[];
   emptyMessage: string;
+  locale: Locale;
+  m: Messages;
 }) {
   return (
     <section>
@@ -233,7 +250,7 @@ function ChapterSection({
           {chapter.name}
         </h2>
         <span className="text-xs text-zinc-400 shrink-0 ml-3">
-          {chapter.start_date} ~ {chapter.end_date ?? "진행 중"}
+          {chapter.start_date} ~ {chapter.end_date ?? m.archive.ongoing}
         </span>
       </div>
 
@@ -245,7 +262,7 @@ function ChapterSection({
               className="rounded-xl bg-zinc-100 dark:bg-zinc-900 px-4 py-3"
             >
               <div className="text-xs text-zinc-400 mb-1">
-                돌아보기 · {n.period_start} ~ {n.period_end}
+                {m.archive.lookBack} · {n.period_start} ~ {n.period_end}
               </div>
               <p className="text-sm whitespace-pre-wrap text-black dark:text-zinc-50">
                 {n.content}
@@ -258,7 +275,11 @@ function ChapterSection({
       {entries.length === 0 ? (
         <p className="text-xs text-zinc-400 mt-3">{emptyMessage}</p>
       ) : (
-        <Timeline entries={entries} reflectionsByEntry={reflectionsByEntry} />
+        <Timeline
+          entries={entries}
+          reflectionsByEntry={reflectionsByEntry}
+          locale={locale}
+        />
       )}
     </section>
   );
@@ -267,9 +288,11 @@ function ChapterSection({
 function Timeline({
   entries,
   reflectionsByEntry,
+  locale,
 }: {
   entries: Entry[];
   reflectionsByEntry: Map<string, Reflection[]>;
+  locale: Locale;
 }) {
   return (
     <div className="border-l border-zinc-200 dark:border-zinc-800 pl-4 flex flex-col gap-5 mt-3">
@@ -277,7 +300,7 @@ function Timeline({
         <div key={entry.id}>
           <div className="text-xs text-zinc-400 mb-1">
             {entry.entry_date}
-            {entry.category ? ` · ${entry.category}` : ""}
+            {entry.category ? ` · ${categoryLabel(entry.category, locale)}` : ""}
           </div>
           <p className="text-base whitespace-pre-wrap text-black dark:text-zinc-50">
             {entry.content}
