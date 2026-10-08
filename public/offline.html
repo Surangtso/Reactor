@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reactor</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 24px;
+        background: #fafafa;
+        color: #71717a;
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+        font-size: 14px;
+        line-height: 1.7;
+        text-align: center;
+        word-break: keep-all;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #000; color: #a1a1aa; }
+      }
+      button {
+        margin-top: 16px;
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 20px;
+        background: #8a1c2b;
+        color: #fff;
+        font: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <p>인터넷에 연결되어 있지 않아.<br />연결되면 다시 열어줘.</p>
+      <button type="button" onclick="location.reload()">다시 시도</button>
+    </div>
+  </body>
+</html>
